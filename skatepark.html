@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ultimate Skate Park</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+    background:#87ceeb;
+}
+
+canvas{
+    display:block;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    background:rgba(0,0,0,0.8);
+    color:white;
+    padding:12px;
+    border-radius:10px;
+    width:260px;
+}
+
+button{
+    width:100%;
+    margin-top:4px;
+    padding:6px;
+    cursor:pointer;
+}
+
+h2{
+    margin-bottom:8px;
+}
+
+#message{
+    color:gold;
+    font-weight:bold;
+    margin-top:8px;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+<h2>🛹 Ultimate Skate Park</h2>
+
+Money: $<span id="money">0</span><br>
+Board: <span id="board">Starter Board</span><br>
+Speed: <span id="speed">1x</span><br>
+Combo: <span id="combo">0</span><br>
+
+<hr><br>
+
+<h3>Shop</h3>
+
+<button onclick="buyBoard(1)">
+Street Board ($250)
+</button>
+
+<button onclick="buyBoard(2)">
+Pro Board ($1000)
+</button>
+
+<button onclick="buyBoard(3)">
+Legend Board ($5000)
+</button>
+
+<button onclick="buyBoard(4)">
+Galaxy Board ($25000)
+</button>
+
+<div id="message"></div>
+
+<br>
+Controls:
+<br>W = Speed Up
+<br>A = Left
+<br>D = Right
+<br>Space = Jump
+<br>Q = Kickflip
+<br>E = Heelflip
+<br>R = 360 Spin
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const keys = {};
+
+let money = 0;
+let combo = 0;
+
+let boardName = "Starter Board";
+let speedMultiplier = 1;
+
+const player = {
+    x:150,
+    y:500,
+    width:40,
+    height:20,
+    vx:0,
+    vy:0,
+    grounded:true
+};
+
+const ramps = [];
+const rails = [];
+
+for(let i=0;i<40;i++){
+
+    ramps.push({
+        x:600 + (i*500),
+        y:450 - Math.random()*250,
+        width:250,
+        height:150 + Math.random()*150
+    });
+
+    rails.push({
+        x:850 + (i*500),
+        y:400 - Math.random()*200,
+        width:180
+    });
+}
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()] = true;
+
+    if(e.code==="Space" && player.grounded){
+        player.vy=-15;
+        player.grounded=false;
+    }
+
+    if(!player.grounded){
+
+        if(e.key.toLowerCase()==="q"){
+            combo+=100*speedMultiplier;
+            showMessage("Kickflip +$"+(100*speedMultiplier));
+        }
+
+        if(e.key.toLowerCase()==="e"){
+            combo+=150*speedMultiplier;
+            showMessage("Heelflip +$"+(150*speedMultiplier));
+        }
+
+        if(e.key.toLowerCase()==="r"){
+            combo+=250*speedMultiplier;
+            showMessage("360 Spin +$"+(250*speedMultiplier));
+        }
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+    keys[e.key.toLowerCase()] = false;
+});
+
+function showMessage(text){
+
+    const msg = document.getElementById("message");
+
+    msg.textContent = text;
+
+    setTimeout(()=>{
+        msg.textContent="";
+    },1500);
+}
+
+function buyBoard(level){
+
+    if(level===1 && money>=250){
+        money-=250;
+        speedMultiplier=2;
+        boardName="Street Board";
+    }
+
+    if(level===2 && money>=1000){
+        money-=1000;
+        speedMultiplier=4;
+        boardName="Pro Board";
+    }
+
+    if(level===3 && money>=5000){
+        money-=5000;
+        speedMultiplier=8;
+        boardName="Legend Board";
+    }
+
+    if(level===4 && money>=25000){
+        money-=25000;
+        speedMultiplier=15;
+        boardName="Galaxy Board";
+    }
+}
+
+let cameraX=0;
+
+function update(){
+
+    if(keys["w"]){
+        player.vx+=0.3*speedMultiplier;
+    }
+
+    if(keys["a"]){
+        player.vx-=0.25;
+    }
+
+    if(keys["d"]){
+        player.vx+=0.25;
+    }
+
+    player.vx*=0.99;
+
+    player.x+=player.vx;
+
+    player.vy+=0.7;
+    player.y+=player.vy;
+
+    let ground=600;
+
+    ramps.forEach(r=>{
+
+        if(
+            player.x+player.width>r.x &&
+            player.x<r.x+r.width
+        ){
+
+            const progress=
+            (player.x-r.x)/r.width;
+
+            const rampSurface=
+            r.y+r.height-(progress*r.height);
+
+            if(player.y+player.height>rampSurface){
+
+                ground=
+                Math.min(
+                    ground,
+                    rampSurface-player.height
+                );
+            }
+        }
+
+    });
+
+    if(player.y>ground){
+
+        if(!player.grounded){
+
+            money+=combo;
+
+            if(combo>0){
+                showMessage(
+                "Landed! +$"+combo
+                );
+            }
+
+            combo=0;
+        }
+
+        player.y=ground;
+        player.vy=0;
+        player.grounded=true;
+    }
+
+    cameraX=
+    player.x-(canvas.width/3);
+
+    document.getElementById("money")
+    .textContent=Math.floor(money);
+
+    document.getElementById("board")
+    .textContent=boardName;
+
+    document.getElementById("speed")
+    .textContent=speedMultiplier+"x";
+
+    document.getElementById("combo")
+    .textContent=Math.floor(combo);
+}
+
+function draw(){
+
+    ctx.fillStyle="#87ceeb";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.save();
+    ctx.translate(-cameraX,0);
+
+    ctx.fillStyle="#44aa44";
+    ctx.fillRect(-1000,620,50000,1000);
+
+    ramps.forEach(r=>{
+
+        ctx.fillStyle="#777";
+
+        ctx.beginPath();
+
+        ctx.moveTo(r.x,r.y+r.height);
+        ctx.lineTo(r.x+r.width,r.y+r.height);
+        ctx.lineTo(r.x+r.width,r.y);
+
+        ctx.closePath();
+        ctx.fill();
+    });
+
+    rails.forEach(rail=>{
+
+        ctx.strokeStyle="yellow";
+        ctx.lineWidth=5;
+
+        ctx.beginPath();
+        ctx.moveTo(rail.x,rail.y);
+        ctx.lineTo(
+            rail.x+rail.width,
+            rail.y
+        );
+        ctx.stroke();
+    });
+
+    ctx.fillStyle="black";
+    ctx.fillRect(
+        player.x,
+        player.y,
+        player.width,
+        player.height
+    );
+
+    ctx.fillStyle="red";
+    ctx.fillRect(
+        player.x-5,
+        player.y+15,
+        50,
+        8
+    );
+
+    ctx.restore();
+
+}
+
+function gameLoop(){
+
+    update();
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+
+</script>
+</body>
+</html>
