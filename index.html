@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Skate Park Tycoon</title>
+<style>
+body{
+    margin:0;
+    background:#87CEEB;
+    overflow:hidden;
+    font-family:Arial;
+}
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    background:rgba(255,255,255,0.9);
+    padding:10px;
+    border-radius:10px;
+}
+button{
+    margin:2px;
+}
+canvas{
+    display:block;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+    <h3>🛹 Skate Park Tycoon</h3>
+    Money: $<span id="money">0</span><br>
+    Board: <span id="boardName">Starter Board</span><br>
+    Trick Score: <span id="score">0</span><br><br>
+
+    <b>Shop</b><br>
+    <button onclick="buyBoard(1)">Street Board ($100)</button><br>
+    <button onclick="buyBoard(2)">Pro Board ($500)</button><br>
+    <button onclick="buyBoard(3)">Legend Board ($2000)</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let money = 0;
+let trickScore = 0;
+
+let boardMultiplier = 1;
+let boardName = "Starter Board";
+
+const player = {
+    x: 100,
+    y: 300,
+    w: 40,
+    h: 20,
+    speed: 0,
+    vy: 0,
+    grounded: false
+};
+
+const keys = {};
+
+document.addEventListener("keydown", e=>{
+    keys[e.key.toLowerCase()] = true;
+
+    if(e.key === " " && player.grounded){
+        player.vy = -12;
+        player.grounded = false;
+    }
+
+    // Tricks while in air
+    if(!player.grounded){
+        if(e.key.toLowerCase() === "q"){
+            trickScore += 50 * boardMultiplier;
+        }
+
+        if(e.key.toLowerCase() === "e"){
+            trickScore += 75 * boardMultiplier;
+        }
+    }
+});
+
+document.addEventListener("keyup", e=>{
+    keys[e.key.toLowerCase()] = false;
+});
+
+const ramps = [
+    {x:300,y:500,w:250,h:100},
+    {x:700,y:400,w:300,h:200},
+    {x:1200,y:300,w:350,h:300},
+    {x:1800,y:450,w:300,h:150},
+    {x:2400,y:250,w:500,h:350}
+];
+
+let cameraX = 0;
+
+function buyBoard(type){
+
+    if(type===1 && money>=100){
+        money-=100;
+        boardMultiplier=2;
+        boardName="Street Board";
+    }
+
+    if(type===2 && money>=500){
+        money-=500;
+        boardMultiplier=4;
+        boardName="Pro Board";
+    }
+
+    if(type===3 && money>=2000){
+        money-=2000;
+        boardMultiplier=8;
+        boardName="Legend Board";
+    }
+
+    updateUI();
+}
+
+function updateUI(){
+    document.getElementById("money").textContent=Math.floor(money);
+    document.getElementById("score").textContent=Math.floor(trickScore);
+    document.getElementById("boardName").textContent=boardName;
+}
+
+function update(){
+
+    if(keys["d"]) player.speed += 0.2;
+    if(keys["a"]) player.speed -= 0.2;
+
+    player.speed *= 0.98;
+
+    player.x += player.speed;
+
+    player.vy += 0.6;
+    player.y += player.vy;
+
+    let ground = 600;
+
+    ramps.forEach(r=>{
+        if(
+            player.x + player.w > r.x &&
+            player.x < r.x + r.w
+        ){
+            let progress = (player.x-r.x)/r.w;
+            let rampHeight = r.y + r.h - (progress*r.h);
+
+            if(player.y + player.h > rampHeight){
+                ground = Math.min(ground,rampHeight-player.h);
+            }
+        }
+    });
+
+    if(player.y > ground){
+        if(!player.grounded && trickScore>0){
+            money += trickScore;
+            trickScore = 0;
+        }
+
+        player.y = ground;
+        player.vy = 0;
+        player.grounded = true;
+    }
+
+    cameraX = player.x - 200;
+
+    updateUI();
+}
+
+function draw(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // sky
+    ctx.fillStyle="#87CEEB";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.save();
+    ctx.translate(-cameraX,0);
+
+    // ground
+    ctx.fillStyle="#55aa55";
+    ctx.fillRect(-1000,620,10000,500);
+
+    // ramps
+    ramps.forEach(r=>{
+        ctx.fillStyle="#888";
+        ctx.beginPath();
+        ctx.moveTo(r.x,r.y+r.h);
+        ctx.lineTo(r.x+r.w,r.y+r.h);
+        ctx.lineTo(r.x+r.w,r.y);
+        ctx.closePath();
+        ctx.fill();
+    });
+
+    // player
+    ctx.fillStyle="black";
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    // skateboard
+    ctx.fillStyle="red";
+    ctx.fillRect(player.x-5,player.y+15,50,8);
+
+    ctx.restore();
+
+    // controls
+    ctx.fillStyle="white";
+    ctx.font="20px Arial";
+    ctx.fillText("WASD = Move | SPACE = Jump | Q/E = Tricks",20,canvas.height-20);
+}
+
+function gameLoop(){
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
