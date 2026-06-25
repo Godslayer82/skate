@@ -1,229 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Skate Park Tycoon</title>
-<style>
-body{
-    margin:0;
-    background:#87CEEB;
-    overflow:hidden;
-    font-family:Arial;
-}
-#ui{
-    position:absolute;
-    top:10px;
-    left:10px;
-    background:rgba(255,255,255,0.9);
-    padding:10px;
-    border-radius:10px;
-}
-button{
-    margin:2px;
-}
-canvas{
-    display:block;
-}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skate XP — Play</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="ui">
-    <h3>🛹 Skate Park Tycoon</h3>
-    Money: $<span id="money">0</span><br>
-    Board: <span id="boardName">Starter Board</span><br>
-    Trick Score: <span id="score">0</span><br><br>
+<nav class="nav">
+  <div class="nav-logo">SKATE XP</div>
+  <a href="index.html" class="active">▶ PLAY</a>
+  <a href="profile.html">PROFILE</a>
+  <a href="achievements.html">ACHIEVEMENTS</a>
+</nav>
 
-    <b>Shop</b><br>
-    <button onclick="buyBoard(1)">Street Board ($100)</button><br>
-    <button onclick="buyBoard(2)">Pro Board ($500)</button><br>
-    <button onclick="buyBoard(3)">Legend Board ($2000)</button>
+<div id="game-wrap">
+  <canvas id="game-canvas"></canvas>
+
+  
+  <div id="hud">
+    <div class="hud-title">SKATE XP</div>
+
+    <div class="hud-row">
+      <span class="hud-label">Cash</span>
+      <span class="hud-value gold" id="hud-money">$0</span>
+    </div>
+
+    <div class="hud-row">
+      <span class="hud-label">Level</span>
+      <span class="hud-value cyan" id="hud-level">1</span>
+    </div>
+
+    <div class="xp-bar-wrap" title="XP Progress">
+      <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+    </div>
+    <div style="font-size:10px;color:var(--text-dim);text-align:right;margin-bottom:6px" id="hud-xp">0 / 100</div>
+
+    <div class="hud-row">
+      <span class="hud-label">Board</span>
+      <span class="hud-value" id="hud-board">Starter Board</span>
+    </div>
+
+    <div class="hud-row">
+      <span class="hud-label">Combo</span>
+      <span class="hud-value red" id="hud-combo">0</span>
+    </div>
+
+    <div class="hud-row">
+      <span class="hud-label">Tricks</span>
+      <span class="hud-value" id="hud-tricks">0</span>
+    </div>
+  </div>
+
+  
+  <div id="shop-panel">
+    <div class="shop-title">// BOARD SHOP</div>
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-name">Street Board</div>
+        <div class="shop-item-price">$250 · 2× mult</div>
+      </div>
+      <button id="buy-board-1" onclick="buyBoard(1)">BUY</button>
+    </div>
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-name">Pro Board</div>
+        <div class="shop-item-price">$1,000 · 4× mult</div>
+      </div>
+      <button id="buy-board-2" onclick="buyBoard(2)">BUY</button>
+    </div>
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-name">Legend Board</div>
+        <div class="shop-item-price">$5,000 · 8× mult</div>
+      </div>
+      <button id="buy-board-3" onclick="buyBoard(3)">BUY</button>
+    </div>
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-name">Galaxy Board</div>
+        <div class="shop-item-price">$25,000 · 15× mult</div>
+      </div>
+      <button id="buy-board-4" onclick="buyBoard(4)">BUY</button>
+    </div>
+
+    <div style="padding-top:8px;border-top:1px solid var(--border);margin-top:6px">
+      <button onclick="resetSave()" style="font-family:var(--font-hud);font-size:10px;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:4px 8px;border-radius:3px;cursor:pointer;width:100%">RESET SAVE</button>
+    </div>
+  </div>
+
+  
+  <div id="controls-hint">
+    <span class="key">W</span> Accelerate<br>
+    <span class="key">A</span><span class="key">D</span> Steer<br>
+    <span class="key">SPC</span> Jump<br>
+    <span class="key">Q</span> Kickflip<br>
+    <span class="key">E</span> Heelflip<br>
+    <span class="key">R</span> 360 Spin<br>
+    <span class="key">F</span> Hardflip<br>
+    <span class="key">G</span> McTwist
+  </div>
 </div>
 
-<canvas id="game"></canvas>
+<div id="toast"></div>
 
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let money = 0;
-let trickScore = 0;
-
-let boardMultiplier = 1;
-let boardName = "Starter Board";
-
-const player = {
-    x: 100,
-    y: 300,
-    w: 40,
-    h: 20,
-    speed: 0,
-    vy: 0,
-    grounded: false
-};
-
-const keys = {};
-
-document.addEventListener("keydown", e=>{
-    keys[e.key.toLowerCase()] = true;
-
-    if(e.key === " " && player.grounded){
-        player.vy = -12;
-        player.grounded = false;
-    }
-
-    // Tricks while in air
-    if(!player.grounded){
-        if(e.key.toLowerCase() === "q"){
-            trickScore += 50 * boardMultiplier;
-        }
-
-        if(e.key.toLowerCase() === "e"){
-            trickScore += 75 * boardMultiplier;
-        }
-    }
-});
-
-document.addEventListener("keyup", e=>{
-    keys[e.key.toLowerCase()] = false;
-});
-
-const ramps = [
-    {x:300,y:500,w:250,h:100},
-    {x:700,y:400,w:300,h:200},
-    {x:1200,y:300,w:350,h:300},
-    {x:1800,y:450,w:300,h:150},
-    {x:2400,y:250,w:500,h:350}
-];
-
-let cameraX = 0;
-
-function buyBoard(type){
-
-    if(type===1 && money>=100){
-        money-=100;
-        boardMultiplier=2;
-        boardName="Street Board";
-    }
-
-    if(type===2 && money>=500){
-        money-=500;
-        boardMultiplier=4;
-        boardName="Pro Board";
-    }
-
-    if(type===3 && money>=2000){
-        money-=2000;
-        boardMultiplier=8;
-        boardName="Legend Board";
-    }
-
-    updateUI();
-}
-
-function updateUI(){
-    document.getElementById("money").textContent=Math.floor(money);
-    document.getElementById("score").textContent=Math.floor(trickScore);
-    document.getElementById("boardName").textContent=boardName;
-}
-
-function update(){
-
-    if(keys["d"]) player.speed += 0.2;
-    if(keys["a"]) player.speed -= 0.2;
-
-    player.speed *= 0.98;
-
-    player.x += player.speed;
-
-    player.vy += 0.6;
-    player.y += player.vy;
-
-    let ground = 600;
-
-    ramps.forEach(r=>{
-        if(
-            player.x + player.w > r.x &&
-            player.x < r.x + r.w
-        ){
-            let progress = (player.x-r.x)/r.w;
-            let rampHeight = r.y + r.h - (progress*r.h);
-
-            if(player.y + player.h > rampHeight){
-                ground = Math.min(ground,rampHeight-player.h);
-            }
-        }
-    });
-
-    if(player.y > ground){
-        if(!player.grounded && trickScore>0){
-            money += trickScore;
-            trickScore = 0;
-        }
-
-        player.y = ground;
-        player.vy = 0;
-        player.grounded = true;
-    }
-
-    cameraX = player.x - 200;
-
-    updateUI();
-}
-
-function draw(){
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // sky
-    ctx.fillStyle="#87CEEB";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    ctx.save();
-    ctx.translate(-cameraX,0);
-
-    // ground
-    ctx.fillStyle="#55aa55";
-    ctx.fillRect(-1000,620,10000,500);
-
-    // ramps
-    ramps.forEach(r=>{
-        ctx.fillStyle="#888";
-        ctx.beginPath();
-        ctx.moveTo(r.x,r.y+r.h);
-        ctx.lineTo(r.x+r.w,r.y+r.h);
-        ctx.lineTo(r.x+r.w,r.y);
-        ctx.closePath();
-        ctx.fill();
-    });
-
-    // player
-    ctx.fillStyle="black";
-    ctx.fillRect(player.x,player.y,player.w,player.h);
-
-    // skateboard
-    ctx.fillStyle="red";
-    ctx.fillRect(player.x-5,player.y+15,50,8);
-
-    ctx.restore();
-
-    // controls
-    ctx.fillStyle="white";
-    ctx.font="20px Arial";
-    ctx.fillText("WASD = Move | SPACE = Jump | Q/E = Tricks",20,canvas.height-20);
-}
-
-function gameLoop(){
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
-</script>
-
+<script src="game.js"></script>
 </body>
 </html>

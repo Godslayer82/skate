@@ -1,249 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Skater Profile</title>
-
-<style>
-body{
-    font-family:Arial,sans-serif;
-    background:#1e1e1e;
-    color:white;
-    text-align:center;
-    margin:0;
-}
-
-.container{
-    max-width:700px;
-    margin:auto;
-    margin-top:40px;
-    background:#2d2d2d;
-    padding:20px;
-    border-radius:15px;
-}
-
-input{
-    padding:10px;
-    width:250px;
-    font-size:16px;
-}
-
-button{
-    padding:10px 15px;
-    margin:5px;
-    cursor:pointer;
-}
-
-.avatar{
-    width:80px;
-    height:80px;
-    border:3px solid transparent;
-    margin:5px;
-    cursor:pointer;
-    border-radius:50%;
-    font-size:50px;
-    line-height:80px;
-    display:inline-block;
-    background:#444;
-}
-
-.selected{
-    border-color:gold;
-}
-
-.stat{
-    background:#3a3a3a;
-    padding:10px;
-    margin:5px;
-    border-radius:10px;
-}
-
-#profileCard{
-    margin-top:20px;
-    padding:20px;
-    background:#444;
-    border-radius:15px;
-}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skate XP — Profile</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
+<nav class="nav">
+  <div class="nav-logo">SKATE XP</div>
+  <a href="index.html">▶ PLAY</a>
+  <a href="profile.html" class="active">PROFILE</a>
+  <a href="achievements.html">ACHIEVEMENTS</a>
+</nav>
 
-<h1>🛹 Skater Profile</h1>
+<div id="toast"></div>
+<div id="profile-page">
+  <div class="profile-page">
 
-<input id="username" placeholder="Enter Username">
+    <div class="page-header">
+      <h1>Skater Profile</h1>
+      <div class="breadcrumb">Customize your identity</div>
+    </div>
 
-<h3>Choose Avatar</h3>
+    
+    <div class="card card-accent-top" style="margin-bottom:20px">
+      <div class="profile-header">
+        <div class="avatar-display" id="avatar-display">🛹</div>
+        <div class="profile-meta">
+          <h1 id="display-name">SKATER</h1>
+          <div class="subtitle">Lifetime skater · Edit below to update</div>
+          <div style="margin-top:10px">
+            <div class="xp-bar-wrap" style="width:200px">
+              <div class="xp-bar-fill" id="profile-xp-bar" style="width:0%"></div>
+            </div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">XP: <span id="stat-xp">0 / 100</span></div>
+          </div>
+        </div>
+      </div>
 
-<div id="avatars">
-<div class="avatar" onclick="selectAvatar('😎')">😎</div>
-<div class="avatar" onclick="selectAvatar('🔥')">🔥</div>
-<div class="avatar" onclick="selectAvatar('🛹')">🛹</div>
-<div class="avatar" onclick="selectAvatar('👑')">👑</div>
-<div class="avatar" onclick="selectAvatar('💀')">💀</div>
-<div class="avatar" onclick="selectAvatar('⚡')">⚡</div>
+      <hr class="divider">
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Level</div>
+          <div class="value cyan" id="stat-level">1</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Cash Earned</div>
+          <div class="value gold" id="stat-money">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Lifetime Tricks</div>
+          <div class="value red" id="stat-tricks">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Best Combo</div>
+          <div class="value gold" id="stat-combo">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Current Board</div>
+          <div class="value" style="font-size:13px" id="stat-board">Starter Board</div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="card card-accent-cyan" style="margin-bottom:20px">
+      <div class="section-label">// Edit Profile</div>
+
+      <div class="form-row">
+        <input type="text" class="input" id="username-input" placeholder="Enter username..." maxlength="24">
+        <button class="btn btn-primary" id="save-profile-btn">SAVE</button>
+      </div>
+
+      <div class="section-label" style="margin-top:16px">// Choose Avatar</div>
+      <div class="avatar-picker">
+        <div class="avatar-opt" data-avatar="😎">😎</div>
+        <div class="avatar-opt" data-avatar="🔥">🔥</div>
+        <div class="avatar-opt" data-avatar="🛹">🛹</div>
+        <div class="avatar-opt" data-avatar="👑">👑</div>
+        <div class="avatar-opt" data-avatar="💀">💀</div>
+        <div class="avatar-opt" data-avatar="⚡">⚡</div>
+        <div class="avatar-opt" data-avatar="🌀">🌀</div>
+        <div class="avatar-opt" data-avatar="🚀">🚀</div>
+        <div class="avatar-opt" data-avatar="🌌">🌌</div>
+        <div class="avatar-opt" data-avatar="🏆">🏆</div>
+      </div>
+    </div>
+
+    
+    <div class="card" style="border-color:rgba(255,60,110,.3)">
+      <div class="section-label" style="color:var(--accent)">// Danger Zone</div>
+      <p style="color:var(--text-dim);font-size:12px;margin-bottom:12px">This will permanently delete all save data including money, level, tricks, and board upgrades.</p>
+      <button class="btn btn-primary" id="reset-profile-btn" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">RESET ALL DATA</button>
+    </div>
+
+  </div>
 </div>
 
-<br>
-
-<button onclick="saveProfile()">Save Profile</button>
-<button onclick="resetProfile()">Reset Profile</button>
-
-<div id="profileCard">
-
-<h2 id="displayAvatar">🛹</h2>
-
-<h2 id="displayName">No Username</h2>
-
-<div class="stat">
-Level: <span id="level">1</span>
-</div>
-
-<div class="stat">
-XP: <span id="xp">0</span>
-</div>
-
-<div class="stat">
-Money: $<span id="money">0</span>
-</div>
-
-<div class="stat">
-Lifetime Tricks: <span id="tricks">0</span>
-</div>
-
-<div class="stat">
-Highest Combo: <span id="combo">0</span>
-</div>
-
-<div class="stat">
-Board Owned: <span id="board">Starter Board</span>
-</div>
-
-</div>
-
-</div>
-
-<script>
-
-let selectedAvatar = "🛹";
-
-function selectAvatar(icon){
-
-    selectedAvatar = icon;
-
-    document
-    .querySelectorAll(".avatar")
-    .forEach(a=>a.classList.remove("selected"));
-
-    [...document.querySelectorAll(".avatar")]
-    .find(a=>a.textContent===icon)
-    .classList.add("selected");
-}
-
-function saveProfile(){
-
-    const username =
-    document.getElementById("username").value.trim();
-
-    if(username===""){
-        alert("Enter a username");
-        return;
-    }
-
-    const profile = {
-
-        username: username,
-        avatar: selectedAvatar,
-
-        level: 1,
-        xp: 0,
-        money: 0,
-        tricks: 0,
-        highestCombo: 0,
-        board: "Starter Board",
-
-        created:
-        new Date().toLocaleDateString()
-
-    };
-
-    localStorage.setItem(
-        "skaterProfile",
-        JSON.stringify(profile)
-    );
-
-    loadProfile();
-
-    alert("Profile Saved!");
-}
-
-function loadProfile(){
-
-    const data =
-    localStorage.getItem("skaterProfile");
-
-    if(!data) return;
-
-    const profile =
-    JSON.parse(data);
-
-    document.getElementById(
-        "displayName"
-    ).textContent =
-    profile.username;
-
-    document.getElementById(
-        "displayAvatar"
-    ).textContent =
-    profile.avatar;
-
-    document.getElementById(
-        "level"
-    ).textContent =
-    profile.level;
-
-    document.getElementById(
-        "xp"
-    ).textContent =
-    profile.xp;
-
-    document.getElementById(
-        "money"
-    ).textContent =
-    profile.money;
-
-    document.getElementById(
-        "tricks"
-    ).textContent =
-    profile.tricks;
-
-    document.getElementById(
-        "combo"
-    ).textContent =
-    profile.highestCombo;
-
-    document.getElementById(
-        "board"
-    ).textContent =
-    profile.board;
-}
-
-function resetProfile(){
-
-    if(confirm("Delete profile?")){
-
-        localStorage.removeItem(
-            "skaterProfile"
-        );
-
-        location.reload();
-    }
-}
-
-loadProfile();
-
-</script>
-
+<script src="game.js"></script>
 </body>
 </html>
